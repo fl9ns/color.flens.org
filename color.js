@@ -1,43 +1,80 @@
 console.clear()
-const Https = require('https')
-const Fs = require('fs')
-const flens = {
-    config: {
-        // user to change color
-        user: {
-            name: `FL9NS`,   // username
-            id: `103070919`  // user ID
-        },
-        // token of user
-        token: {
-            access: `<your_token_here>`, // user:manage:chat_color
-            client: `<client_id_of_token_generated>`
-        }
-    },
 
+// Filesystem
+const Fs = require('fs')
+
+// Request
+const Https = require('https')
+
+// My Config
+const CONFIG = {
+    user: {
+        name: 'FL9NS',
+        id: '103070919',
+    },
+    token: {
+        access: '<your_token_here>', // user:manage:chat_color
+        client: '<client_id_of_token_generated>',
+    },
+}
+
+// Output shell
+console.log('+-----------------------------------------------+')
+console.log('|                                               |')
+console.log('|   Twitch -> Change Color -> FL9NS             |')
+console.log('|                                               |')
+console.log('| - - - - - - - - - - - - - - - - - - - - - - - |')
+console.log('|                                               |')
+console.log('|   Script:  twitch.change.color.fl9ns.js       |')
+console.log('|   Version: 1.1                                |')
+console.log('|                                               |')
+console.log('+-----------------------------------------------+')
+
+// Save PID
+Fs.writeFileSync(`/tmp/twitch.change.color.fl9ns.pid`, `${process.pid}`)
+
+// My tools
+const tool = {
     random: (min, max) => {
         return Math.floor(Math.random() * (max - min + 1)) + min
     },
-
-    color: () => {
-        let colorChar = [`0`,`1`,`2`,`3`,`4`,`5`,`6`,`7`,`8`,`9`,`A`,`B`,`C`,`D`,`E`,`F`]
-        let result = ``
-        for(let i=1; i<=6; i++) {
-            result += colorChar[flens.random(0, colorChar.length-1)]
+    color: (hexa) => {
+        if(hexa === true) {
+            const colorChar = [`0`,`1`,`2`,`3`,`4`,`5`,`6`,`7`,`8`,`9`,`A`,`B`,`C`,`D`,`E`,`F`]
+            let result = ``
+            for(let i=1; i<=6; i++) {
+                result += colorChar[tool.random(0, colorChar.length-1)]
+            }
+            return `%23${result}`
+        } else {
+            const colorName = ['blue',
+                                'blue_violet',
+                                'cadet_blue',
+                                'chocolate',
+                                'coral',
+                                'dodger_blue',
+                                'firebrick',
+                                'golden_rod',
+                                'green',
+                                'hot_pink',
+                                'orange_red',
+                                'red',
+                                'sea_green',
+                                'spring_green',
+                                'yellow_green']
+            return colorName[tool.random(0, colorName.length-1)]
         }
-        return result
     },
-
     change: {
         color: (color) => {
             return new Promise((resolve) => {
                 const req = Https.request({
                     hostname: 'api.twitch.tv',
-                    path: `helix/chat/color?user_id=${flens.config.user.id}&color=%23${color}`,
+                    path: `helix/chat/color?user_id=${CONFIG.user.id}&color=${color}`,
                     method: `PUT`,
                     headers: {
-                        'Authorization':`Bearer ${flens.config.token.access}`,
-                        'Client-Id':`${flens.config.token.client}`,
+                        'Authorization':`Bearer ${CONFIG.token.access}`,
+                        'Client-Id':`${CONFIG.token.client}`,
                         'Content-Type': 'application/json'
                     }
                 }, (res) => {
@@ -48,22 +85,15 @@ const flens = {
             })
         }
     },
-
-    pid: () => {
-        // save pid in file for check if the PID is alive (not include in this script)
-        Fs.writeFile(`/tmp/color.pid`, `${process.pid}`, (e) => {if(e){console.log(`impossible to save pid (${e})`)}})
-    }
 }
 
+// Main loop
 setInterval(async () => {
-    let color = flens.color()
-    let status = await flens.change.color(color)
+    const color = tool.color()
+    const status = await tool.change.color(color)
     if(status !== 204) {
         process.stdout.write(`ERROR ${status}`+"         \r");
     } else {
-        process.stdout.write(`#${color}`+"         \r");
+        process.stdout.write(`${color}`+"         \r");
     }
 }, 500)
-
-// save pid
-flens.pid()
